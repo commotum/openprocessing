@@ -1,0 +1,37 @@
+import time
+from ratelimit import limits, sleep_and_retry
+import requests
+from settings import BASE_URL, USER_AGENT, MAX_CALLS_PER_MINUTE
+
+HEADERS = {"User-Agent": USER_AGENT}
+
+@sleep_and_retry
+@limits(calls=MAX_CALLS_PER_MINUTE, period=60)
+def _get(path, *, params=None, timeout=15):
+    """Polite GET wrapper that respects the 40‑req/min rule."""
+    url = f"{BASE_URL}{path}"
+    r = requests.get(url, params=params, headers=HEADERS, timeout=timeout)
+    r.raise_for_status()
+    return r.json()
+
+# ---------- high‑level helpers ---------- #
+
+def trending_ids(limit=90, offset=0):
+    """
+    Return a list of sketch IDs that the front‑end labels 'Trending'.
+
+    Internally the site calls:
+        /api/sketches?sort=trending&limit=…&offset=…
+    (confirmed via DevTools, July 2025).
+    """
+    payload = dict(sort="trending", limit=limit, offset=offset)
+    data = _get("/api/sketches", params=payload)  # → { records:[{id: …}, …] }
+    return [rec["id"] for rec in data["records"]]
+
+def sketch_code(sketch_id):
+    """Return the *array* of code files (one element per tab)."""
+    return _get(f"/api/sketch/{sketch_id}/code")        # :contentReference[oaicite:0]{index=0}
+
+def sketch_assets(sketch_id):
+    """Return any uploaded binary files (images, fonts, etc.)."""
+    return _get(f"/api/sketch/{sketch_id}/files")       # :contentReference[oaicite:1]{index=1}

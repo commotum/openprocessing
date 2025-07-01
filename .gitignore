@@ -1,0 +1,43 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# Environment variables
+.env
+.env.*
+
+# Dependency/packaging artifacts
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-wheel-metadata/
+share/python-wheels/
+build/
+dist/
+wheels/
+downloads/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+
+# Test/coverage
+.pytest_cache/
+.coverage
+.coverage.*
+.cache
+
+# Editor/OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# End Generation Here

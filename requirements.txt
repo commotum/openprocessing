@@ -1,0 +1,4 @@
+requests>=2.32
+tqdm>=4.66        # nice progress bar
+python-slugify>=8 # clean file‑names from sketch titles
+ratelimit>=2.2    # polite 40‑calls‑per‑minute guard

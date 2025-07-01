@@ -1,8 +1,7 @@
 BASE_URL   = "https://openprocessing.org"
 USER_AGENT = (
-    "JakeTrendingScraper/1.0 "
-    "(contact: jake@example.com) "
-    "Educational—not for re‑hosting"
+    "Mozilla/5.0 "
+    "(compatible; OpenProcessingScraper/1.0)"
 )
 
 # OpenProcessing’s stated ceiling

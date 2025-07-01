@@ -6,7 +6,7 @@ and store them under ./data/YYYY‑MM‑DD‑run/.
 
 import argparse, sys
 from tqdm import tqdm
-from api import trending_ids, sketch_code, sketch_assets
+from api import trending_ids, trending_ids_iter, sketch_code, sketch_assets
 from utils import out_folder, save_sketch
 from settings import DEFAULT_OUTDIR
 
@@ -18,10 +18,11 @@ def is_single_file(sketch_id):
         return None
     return code_arr[0]                    # qualifying code object
 
-def main(limit, out):
+def main(limit, out, grab_all=False):
     outdir = out_folder(out)
     kept = 0
-    for sid in tqdm(trending_ids(limit)):
+    ids = trending_ids_iter(step=limit) if grab_all else trending_ids(limit)
+    for sid in tqdm(ids):
         code_obj = is_single_file(sid)
         if not code_obj:
             continue
@@ -32,11 +33,13 @@ def main(limit, out):
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Grab single‑file trending p5.js sketches")
     p.add_argument("--limit", type=int, default=90,
-                   help="how many trending IDs to test (multiple of 30 recommended)")
+                   help="how many trending IDs to request per page")
+    p.add_argument("--all", action="store_true",
+                   help="iterate through all pages of trending IDs")
     p.add_argument("-o", "--out", default=DEFAULT_OUTDIR,
                    help="base output directory (default: ./data)")
     args = p.parse_args()
     try:
-        main(args.limit, args.out)
+        main(args.limit, args.out, grab_all=args.all)
     except KeyboardInterrupt:
         sys.exit("\nAborted.")

@@ -28,6 +28,17 @@ def trending_ids(limit=90, offset=0):
     data = _get("/api/sketches", params=payload)  # → { records:[{id: …}, …] }
     return [rec["id"] for rec in data["records"]]
 
+def trending_ids_iter(step=90, start=0):
+    """Yield trending sketch IDs across all pages until exhausted."""
+    offset = start
+    while True:
+        ids = trending_ids(limit=step, offset=offset)
+        if not ids:
+            break
+        for sid in ids:
+            yield sid
+        offset += step
+
 def sketch_code(sketch_id):
     """Return the *array* of code files (one element per tab)."""
     return _get(f"/api/sketch/{sketch_id}/code")        # :contentReference[oaicite:0]{index=0}

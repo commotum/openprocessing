@@ -4,11 +4,23 @@ Fetch today's 'Trending' sketches that are one‑file‑only
 and store them under ./data/YYYY‑MM‑DD‑run/.
 """
 
-import argparse, sys
+import argparse, sys, pathlib
 from tqdm import tqdm
 from api import trending_ids, trending_ids_iter, sketch_code, sketch_assets
 from utils import out_folder, save_sketch
 from settings import DEFAULT_OUTDIR
+
+
+def load_progress(path):
+    p = pathlib.Path(path)
+    if not p.exists():
+        return set()
+    return {line.strip() for line in p.read_text().splitlines()}
+
+
+def record_progress(path, sketch_id):
+    with open(path, "a") as fh:
+        fh.write(f"{sketch_id}\n")
 
 def is_single_file(sketch_id):
     code_arr  = sketch_code(sketch_id)
@@ -18,15 +30,26 @@ def is_single_file(sketch_id):
         return None
     return code_arr[0]                    # qualifying code object
 
-def main(limit, out, grab_all=False):
+def main(limit, out, grab_all=False, progress="progress.txt"):
     outdir = out_folder(out)
+    processed = load_progress(progress)
     kept = 0
     ids = trending_ids_iter(step=limit) if grab_all else trending_ids(limit)
     for sid in tqdm(ids):
-        code_obj = is_single_file(sid)
+        if str(sid) in processed:
+            continue
+        try:
+            code_obj = is_single_file(sid)
+        except Exception as exc:
+            print(f"[error] {sid}: {exc}")
+            continue
         if not code_obj:
+            record_progress(progress, sid)
+            processed.add(str(sid))
             continue
         save_sketch(sid, code_obj["filename"], code_obj, outdir)
+        record_progress(progress, sid)
+        processed.add(str(sid))
         kept += 1
     print(f"\n✓ Saved {kept} single‑file sketches to {outdir}")
 
@@ -38,8 +61,10 @@ if __name__ == "__main__":
                    help="iterate through all pages of trending IDs")
     p.add_argument("-o", "--out", default=DEFAULT_OUTDIR,
                    help="base output directory (default: ./data)")
+    p.add_argument("--progress", default="progress.txt",
+                   help="path to progress file for resuming runs")
     args = p.parse_args()
     try:
-        main(args.limit, args.out, grab_all=args.all)
+        main(args.limit, args.out, grab_all=args.all, progress=args.progress)
     except KeyboardInterrupt:
         sys.exit("\nAborted.")

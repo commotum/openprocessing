@@ -25,3 +25,12 @@ python scraper.py --all
 
 Sketches and their metadata are stored under `./data/YYYY-MM-DD-run/` by
 default. Use `-o` to choose a different output directory.
+
+### Resuming
+
+If the scraper stops unexpectedly, rerun it with the same `--progress`
+file to skip sketches that were already processed:
+
+```sh
+python scraper.py --progress progress.txt
+```

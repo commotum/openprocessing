@@ -7,12 +7,23 @@ HEADERS = {"User-Agent": USER_AGENT}
 
 @sleep_and_retry
 @limits(calls=MAX_CALLS_PER_MINUTE, period=60)
-def _get(path, *, params=None, timeout=15):
-    """Polite GET wrapper that respects the 40‑req/min rule."""
+def _get(path, *, params=None, timeout=15, retries=3, backoff=5):
+    """Polite GET wrapper that respects the 40‑req/min rule.
+
+    Retries a few times on network errors to make the scraper more
+    fault tolerant.
+    """
     url = f"{BASE_URL}{path}"
-    r = requests.get(url, params=params, headers=HEADERS, timeout=timeout)
-    r.raise_for_status()
-    return r.json()
+
+    for attempt in range(retries):
+        try:
+            r = requests.get(url, params=params, headers=HEADERS, timeout=timeout)
+            r.raise_for_status()
+            return r.json()
+        except requests.exceptions.RequestException:
+            if attempt == retries - 1:
+                raise
+            time.sleep(backoff * (attempt + 1))
 
 # ---------- high‑level helpers ---------- #
 

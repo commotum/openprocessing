@@ -1,8 +1,11 @@
+import logging
 import time
 from ratelimit import limits, sleep_and_retry
 import requests
 from requests.exceptions import JSONDecodeError, RequestException
 from settings import BASE_URL, USER_AGENT, MAX_CALLS_PER_MINUTE
+
+logger = logging.getLogger(__name__)
 
 HEADERS = {"User-Agent": USER_AGENT}
 
@@ -21,6 +24,7 @@ def _get(path, *, params=None, timeout=15, retries=3, backoff=5):
             r = requests.get(url, params=params, headers=HEADERS, timeout=timeout)
             r.raise_for_status()
 <<<<<<< ours
+<<<<<<< ours
             try:
                 return r.json()
             except JSONDecodeError as e:
@@ -29,6 +33,13 @@ def _get(path, *, params=None, timeout=15, retries=3, backoff=5):
 =======
             return r.json()
         except (RequestException, JSONDecodeError) as exc:
+>>>>>>> theirs
+=======
+            if not r.headers.get("Content-Type", "").startswith("application/json"):
+                raise ValueError(f"Non-JSON response from {url}")
+            return r.json()
+        except (RequestException, JSONDecodeError, ValueError) as exc:
+            logger.warning("GET %s failed (%s), attempt %d/%d", url, exc, attempt + 1, retries)
 >>>>>>> theirs
             if attempt == retries - 1:
                 raise ValueError(f"Failed to retrieve JSON from {url}") from exc
@@ -48,7 +59,11 @@ def trending_ids(limit=90, offset=0):
     try:
         data = _get("/api/sketches", params=payload)  # → { records:[{id: …}, …] }
     except ValueError as exc:
+<<<<<<< ours
         print(f"[error] failed to fetch trending IDs: {exc}")
+=======
+        logger.error("Failed to fetch trending IDs: %s", exc)
+>>>>>>> theirs
         return []
     return [rec["id"] for rec in data["records"]]
 

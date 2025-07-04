@@ -4,11 +4,16 @@ Fetch today's 'Trending' sketches that are one‑file‑only
 and store them under ./data/YYYY‑MM‑DD‑run/.
 """
 
-import argparse, sys, pathlib
+import argparse
+import sys
+import pathlib
+import logging
 from tqdm import tqdm
 from api import trending_ids, trending_ids_iter, sketch_code, sketch_assets
 from utils import out_folder, save_sketch
 from settings import DEFAULT_OUTDIR
+
+logger = logging.getLogger(__name__)
 
 
 def load_progress(path):
@@ -41,7 +46,7 @@ def main(limit, out, grab_all=False, progress="progress.txt"):
         try:
             code_obj = is_single_file(sid)
         except Exception as exc:
-            print(f"[error] {sid}: {exc}")
+            logger.error("%s: %s", sid, exc)
             continue
         if not code_obj:
             record_progress(progress, sid)
@@ -51,7 +56,7 @@ def main(limit, out, grab_all=False, progress="progress.txt"):
         record_progress(progress, sid)
         processed.add(str(sid))
         kept += 1
-    print(f"\n✓ Saved {kept} single‑file sketches to {outdir}")
+    logger.info("\u2713 Saved %d single-file sketches to %s", kept, outdir)
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Grab single‑file trending p5.js sketches")
@@ -64,6 +69,7 @@ if __name__ == "__main__":
     p.add_argument("--progress", default="progress.txt",
                    help="path to progress file for resuming runs")
     args = p.parse_args()
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
     try:
         main(args.limit, args.out, grab_all=args.all, progress=args.progress)
     except KeyboardInterrupt:

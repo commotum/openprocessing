@@ -1,6 +1,7 @@
 import time
 from ratelimit import limits, sleep_and_retry
 import requests
+from requests.exceptions import JSONDecodeError, RequestException
 from settings import BASE_URL, USER_AGENT, MAX_CALLS_PER_MINUTE
 
 HEADERS = {"User-Agent": USER_AGENT}
@@ -19,8 +20,11 @@ def _get(path, *, params=None, timeout=15, retries=3, backoff=5):
         try:
             r = requests.get(url, params=params, headers=HEADERS, timeout=timeout)
             r.raise_for_status()
-            return r.json()
-        except requests.exceptions.RequestException:
+            try:
+                return r.json()
+            except JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON response from {url}") from e
+        except (RequestException, ValueError):
             if attempt == retries - 1:
                 raise
             time.sleep(backoff * (attempt + 1))

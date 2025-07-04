@@ -20,13 +20,18 @@ def _get(path, *, params=None, timeout=15, retries=3, backoff=5):
         try:
             r = requests.get(url, params=params, headers=HEADERS, timeout=timeout)
             r.raise_for_status()
+<<<<<<< ours
             try:
                 return r.json()
             except JSONDecodeError as e:
                 raise ValueError(f"Invalid JSON response from {url}") from e
         except (RequestException, ValueError):
+=======
+            return r.json()
+        except (RequestException, JSONDecodeError) as exc:
+>>>>>>> theirs
             if attempt == retries - 1:
-                raise
+                raise ValueError(f"Failed to retrieve JSON from {url}") from exc
             time.sleep(backoff * (attempt + 1))
 
 # ---------- high‑level helpers ---------- #
@@ -40,7 +45,11 @@ def trending_ids(limit=90, offset=0):
     (confirmed via DevTools, July 2025).
     """
     payload = dict(sort="trending", limit=limit, offset=offset)
-    data = _get("/api/sketches", params=payload)  # → { records:[{id: …}, …] }
+    try:
+        data = _get("/api/sketches", params=payload)  # → { records:[{id: …}, …] }
+    except ValueError as exc:
+        print(f"[error] failed to fetch trending IDs: {exc}")
+        return []
     return [rec["id"] for rec in data["records"]]
 
 def trending_ids_iter(step=90, start=0):

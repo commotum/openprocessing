@@ -44,7 +44,7 @@ def trending_ids(limit=90, offset=0):
     """
     payload = dict(sort="trending", limit=limit, offset=offset)
     try:
-        data = _get("/api/sketches", params=payload)  # → { records:[{id: …}, …] }
+        data = _get("/api/sketches/", params=payload)  # → { records:[{id: …}, …] }
     except ValueError as exc:
         logger.error("Failed to fetch trending IDs: %s", exc)
         return []
